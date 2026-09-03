@@ -1,162 +1,83 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Zocks embed — cross-origin host page</title>
-    <!--
-      Cross-origin harness for the embed widget. Unlike /embed/demo (same-origin,
-      allowed by `frame-ancestors 'self'`), this exercises the real path: the
-      account's embed allowlist must contain this page's domain or the browser
-      blocks the frame and the widget falls back to a link.
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zocks booking embeds</title>
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-head">
+      <h1>Zocks booking embeds</h1>
+      <nav class="nav">
+        <a href="./" aria-current="page">Overview</a>
+        <a href="widget/">Widget</a>
+        <a href="iframe/">iframe</a>
+      </nav>
+    </header>
 
-        pnpm build:widget && pnpm dev          # serve the app on :3000
-        npx serve -l 4173 examples             # serve this page on :4173
+    <p class="lede">
+      Hello Tamas — a cross-origin host page for the two ways of putting a Zocks
+      booking page on somebody else's site, one per page so they can be compared
+      against each other.
+    </p>
 
-      Then add "localhost" to the account's allowedDomains — the app maps
-      loopback hosts to `localhost:*` (app/security/embedConfig.ts), so any port
-      is covered — and open http://localhost:4173/host.html?account=…&user=…
-    -->
-    <style>
-      body {
-        margin: 0;
-        padding: 32px 16px;
-        background: #f5f5f4;
-        font:
-          400 16px/1.5 system-ui,
-          -apple-system,
-          "Segoe UI",
-          sans-serif;
-        color: #1c1917;
-      }
-      main {
-        max-width: 900px;
-        margin: 0 auto;
-      }
-      .row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        margin-bottom: 24px;
-      }
-      button {
-        padding: 10px 16px;
-        border: 0;
-        border-radius: 8px;
-        background: #1c1917;
-        color: #fff;
-        font-size: 14px;
-        cursor: pointer;
-      }
-      #log {
-        margin-top: 24px;
-        padding: 12px;
-        border-radius: 8px;
-        background: #0c0a09;
-        color: #e7e5e4;
-        font:
-          12px/1.6 ui-monospace,
-          monospace;
-        max-height: 320px;
-        overflow: auto;
-      }
-      .tall {
-        height: 60vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #78716c;
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>Pretend partner site</h1>
-      <div class="row">
-        <button id="popup">Book a meeting (popup)</button>
-        <span id="config"></span>
-      </div>
+    <div class="cards">
+      <section class="card">
+        <h2>Widget</h2>
+        <p>
+          Loads <code>/embed/v1.js</code> and calls
+          <code>Zocks.initWidget()</code> twice: once inline, once as a popup.
+          The host page gets <code>onReady</code>, <code>onResize</code>,
+          <code>onStepChange</code>, <code>onBookingConfirmed</code> and
+          <code>onError</code> back.
+        </p>
+        <a class="go" href="widget/">Open /widget &rarr;</a>
+      </section>
 
-      <!-- Deliberately below the fold, to check scroll-on-step-change. -->
-      <div class="tall">↓ scroll down to the inline embed ↓</div>
+      <section class="card">
+        <h2>iframe</h2>
+        <p>
+          A plain <code>&lt;iframe&gt;</code> pointing straight at the booking
+          page. No script on the host page, and no visibility into what happens
+          inside the frame.
+        </p>
+        <a class="go" href="iframe/">Open /iframe &rarr;</a>
+      </section>
+    </div>
 
-      <div id="inline"></div>
+    <section class="card" style="margin-top:16px">
+      <h2 style="margin:0 0 6px;font-size:16px">What both pages point at</h2>
+      <p class="hint" style="margin:0 0 12px">
+        Defaults live in <code>assets/config.js</code>. Either page accepts
+        <code>?base=</code>, <code>?account=</code>, <code>?user=</code> and
+        <code>?eventType=</code>, so one deploy can demo any booking page.
+      </p>
+      <table class="facts">
+        <tr><th>Booking site</th><td><code>https://booking.dev.zocks.io</code></td></tr>
+        <tr><th>Account</th><td><code>zocks</code></td></tr>
+        <tr><th>User</th><td><code>imre-dobos-0y0ca2wqgr4ugypm</code></td></tr>
+      </table>
+    </section>
 
-      <pre id="log">waiting…</pre>
-    </main>
-
-    <script>
-      // Read the target from the query string so this file needs no editing.
-      const params = new URLSearchParams(location.search);
-      const account = params.get("account");
-      const user = params.get("user");
-      const eventType = params.get("eventType");
-      const appOrigin = params.get("origin") || "http://localhost:3000";
-
-      const logEl = document.getElementById("log");
-      let lines = [];
-      function log(line) {
-        lines = [new Date().toLocaleTimeString() + "  " + line, ...lines].slice(
-          0,
-          200,
-        );
-        logEl.textContent = lines.join("\n");
-      }
-
-      document.getElementById("config").textContent =
-        account && user
-          ? `${appOrigin} → /${account}/${user}`
-          : "add ?account=…&user=… to the URL";
-
-      const script = document.createElement("script");
-      script.src = appOrigin + "/embed/v1.js";
-      script.async = true;
-      script.onload = function () {
-        if (!account || !user) {
-          log("missing ?account= / ?user=");
-          return;
-        }
-        log("widget loaded, version " + window.Zocks.version);
-
-        const shared = {
-          account: account,
-          user: user,
-          eventType: eventType,
-          // Not needed in practice — the widget derives this from its own src —
-          // but explicit here so a mismatched port is obvious.
-          origin: appOrigin,
-          onReady: function () {
-            log("ready");
-          },
-          onResize: function (height) {
-            log("resize " + height + "px");
-          },
-          onStepChange: function (step) {
-            log("step " + step);
-          },
-          onBookingConfirmed: function (booking) {
-            log("booking-confirmed " + JSON.stringify(booking));
-          },
-          onError: function (error) {
-            log("error " + error.code + ": " + error.message);
-          },
-        };
-
-        window.Zocks.initWidget(
-          Object.assign({}, shared, { target: "#inline" }),
-        );
-        const modal = window.Zocks.initWidget(
-          Object.assign({}, shared, { mode: "popup" }),
-        );
-        document.getElementById("popup").addEventListener("click", function () {
-          modal.open();
-        });
-      };
-      script.onerror = function () {
-        log("failed to load " + script.src);
-      };
-      document.head.appendChild(script);
-    </script>
-  </body>
+    <section class="card" style="margin-top:16px">
+      <h2 style="margin:0 0 6px;font-size:16px">Before either page works here</h2>
+      <p class="hint" style="margin:0 0 10px">
+        This is a genuinely cross-origin host, so the account's embed allowlist
+        has to contain <code>imredobos.github.io</code>. As of the last check the
+        booking page still answers
+        <code>frame-ancestors 'self'</code>, so the browser blocks the frame:
+        <code>/widget</code> degrades to the widget's own "Open the booking
+        page" link after its 4s timeout, and <code>/iframe</code> shows nothing
+        but the browser's blocked-frame error.
+      </p>
+      <p class="hint" style="margin:0">
+        For a local app, point the demos at it with
+        <code>?base=http://localhost:3000</code> and add <code>localhost</code>
+        to <code>allowedDomains</code>.
+      </p>
+    </section>
+  </div>
+</body>
 </html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iframe embed &middot; Zocks booking</title>
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-head">
+      <h1>Zocks booking embeds</h1>
+      <nav class="nav">
+        <a href="../">Overview</a>
+        <a href="../widget/">Widget</a>
+        <a href="./" aria-current="page">iframe</a>
+      </nav>
+    </header>
+
+    <p class="lede">
+      The booking page in a native <code>&lt;iframe&gt;</code>. Nothing but
+      markup on the host page &mdash; no Zocks script, no access to what happens
+      inside the frame.
+    </p>
+
+    <div id="settings"></div>
+
+    <section class="card embed">
+      <div class="embed-bar">
+        <span class="tag">iframe src</span>
+        <code id="src-label"></code>
+      </div>
+      <iframe
+        id="booking-frame"
+        title="Zocks booking page"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </section>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script>
+    const { config, mountSettings } = window.ZocksDemo;
+
+    mountSettings(document.getElementById('settings'), ['base', 'account', 'user']);
+
+    document.getElementById('booking-frame').src = config.bookingUrl;
+    document.getElementById('src-label').textContent = config.bookingUrl;
+  </script>
+</body>
+</html>
