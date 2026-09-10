@@ -43,7 +43,15 @@
   <script>
     const { config, mountSettings } = window.ZocksDemo;
 
-    mountSettings(document.getElementById('settings'), ['base', 'account', 'user']);
+    mountSettings(document.getElementById('settings'), [
+      'base',
+      'account',
+      'user',
+      'brandColor',
+      'hideLogo',
+      'hideAccountName',
+      'hideProfilePhoto',
+    ]);
 
     document.getElementById('booking-frame').src = config.bookingUrl;
     document.getElementById('src-label').textContent = config.bookingUrl;

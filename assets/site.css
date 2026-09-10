@@ -142,6 +142,24 @@ a { color: var(--accent); }
   color: var(--text);
 }
 
+.settings .check {
+  align-self: end;
+}
+
+.settings .check label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 9px;
+  cursor: pointer;
+}
+
+.settings .check input {
+  width: auto;
+  padding: 0;
+  margin: 0;
+}
+
 .settings .actions {
   display: flex;
   gap: 10px;

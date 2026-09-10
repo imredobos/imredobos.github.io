@@ -83,6 +83,10 @@
       'user',
       'eventType',
       'minHeight',
+      'brandColor',
+      'hideLogo',
+      'hideAccountName',
+      'hideProfilePhoto',
     ]);
 
     const statusEl = document.getElementById('widget-status');
@@ -145,6 +149,13 @@
           user: config.user,
           eventType: config.eventType || undefined,
           minHeight: Number.isFinite(minHeight) && minHeight > 0 ? minHeight : undefined,
+          // Branding overrides: the widget forwards these as query params on
+          // the frame URL. An invalid brandColor makes initWidget throw, which
+          // the catch below surfaces — useful to demo the loud-failure contract.
+          brandColor: config.brandColor || undefined,
+          hideLogo: config.hideLogo === '1',
+          hideAccountName: config.hideAccountName === '1',
+          hideProfilePhoto: config.hideProfilePhoto === '1',
           // Not needed in practice — the widget derives this from its own src —
           // but explicit here so a mismatched origin is obvious.
           origin: config.base,
