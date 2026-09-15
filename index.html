@@ -57,9 +57,13 @@
         <code>/zocks</code> link, with <code>?l=</code> scheduling links carried
         through. Branding overrides are supported too &mdash;
         <code>?brandColor=%23b91c1c</code>, <code>?hideLogo=1</code>,
-        <code>?hideAccountName=1</code>, <code>?hideProfilePhoto=1</code> &mdash;
-        hide-only plus a recolor: they can never show or replace what the
-        account's settings keep private.
+        <code>?hideAccountName=1</code>, <code>?hideProfilePhoto=1</code>,
+        <code>?hideUserName=1</code>, or <code>?hideAll=1</code> for all four at
+        once; an explicit flag wins over <code>hideAll</code>, so
+        <code>?hideAll=1&amp;hideLogo=0</code> hides everything but the logo.
+        Hide-only plus a recolor: a param can undo the host's own
+        <code>hideAll</code>, but never show or replace what the account's
+        settings keep private.
       </p>
       <table class="facts">
         <tr><th>Booking link</th><td><code>https://booking.dev.zocks.io/zocks/imre-dobos-0y0ca2wqgr4ugypm</code></td></tr>

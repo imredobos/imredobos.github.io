@@ -62,9 +62,11 @@
       'url',
       'minHeight',
       'brandColor',
+      'hideAll',
       'hideLogo',
       'hideAccountName',
       'hideProfilePhoto',
+      'hideUserName',
     ]);
 
     const statusEl = document.getElementById('widget-status');
@@ -122,9 +124,13 @@
           // the frame URL. An invalid brandColor makes initWidget throw, which
           // the catch below surfaces — useful to demo the loud-failure contract.
           brandColor: config.brandColor || undefined,
-          hideLogo: config.hideLogo === '1',
-          hideAccountName: config.hideAccountName === '1',
-          hideProfilePhoto: config.hideProfilePhoto === '1',
+          hideAll: config.hideAll === '1',
+          // An unchecked box must be `undefined`, not `false`: an explicit
+          // false would override hideAll and force that element to show.
+          hideLogo: config.hideLogo === '1' ? true : undefined,
+          hideAccountName: config.hideAccountName === '1' ? true : undefined,
+          hideProfilePhoto: config.hideProfilePhoto === '1' ? true : undefined,
+          hideUserName: config.hideUserName === '1' ? true : undefined,
           onReady: function () {
             log('ready');
           },

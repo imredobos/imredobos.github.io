@@ -31,6 +31,9 @@
       value: '',
       required: false,
     },
+    // hideAll hides every element below; a checkbox can only add a flag, so the
+    // per-element override (?hideAll=1&hideLogo=0) is demoed via the URL.
+    hideAll: { label: 'Hide all branding', value: '', type: 'checkbox' },
     hideLogo: { label: 'Hide logo', value: '', type: 'checkbox' },
     hideAccountName: { label: 'Hide account name', value: '', type: 'checkbox' },
     hideProfilePhoto: {
@@ -39,6 +42,7 @@
       required: false,
       type: 'checkbox',
     },
+    hideUserName: { label: 'Hide advisor name', value: '', type: 'checkbox' },
   };
 
   const params = new URLSearchParams(window.location.search);
@@ -66,7 +70,13 @@
     if (config.brandColor) {
       frameUrl.searchParams.set('brandColor', config.brandColor);
     }
-    for (const flag of ['hideLogo', 'hideAccountName', 'hideProfilePhoto']) {
+    for (const flag of [
+      'hideAll',
+      'hideLogo',
+      'hideAccountName',
+      'hideProfilePhoto',
+      'hideUserName',
+    ]) {
       if (config[flag] === '1') frameUrl.searchParams.set(flag, '1');
     }
     config.bookingUrl = frameUrl.toString();
