@@ -1,26 +1,26 @@
 /*
  * Shared configuration for the two embed demos (/widget and /iframe).
  *
- * Both demos read the same values, so one deploy can target any account/user
+ * Both demos read the same values, so one deploy can target any booking page
  * without an edit:
- *   ?base=https://booking.dev.zocks.io&account=zocks&user=…&eventType=…
+ *   ?url=https://booking.dev.zocks.io/zocks/…
  *     [&brandColor=%23b91c1c][&hideLogo=1][&hideAccountName=1][&hideProfilePhoto=1]
  *
- * `base` is the origin of the booking app. /iframe frames `base/{account}/{user}`;
- * /widget loads `base/embed/v1.js`. Point it at http://localhost:3000 to test
- * against a local `pnpm build:widget && pnpm dev`.
+ * `url` is the booking page link, exactly as copied from the browser — an
+ * account-wide link (…/zocks), an advisor link, or an event-type link all
+ * work, and a scheduling-link `?l=` is carried through. /iframe frames the
+ * link directly; /widget loads `<link origin>/embed/v1.js` and hands the link
+ * to Zocks.initWidget(). Point it at http://localhost:3000/… to test against
+ * a local `pnpm dev`.
  */
 (function () {
   const FIELDS = {
-    base: {
-      label: 'Booking site',
-      value: 'https://booking.dev.zocks.io',
+    url: {
+      label: 'Booking page link',
+      value: 'https://booking.dev.zocks.io/zocks/imre-dobos-0y0ca2wqgr4ugypm',
       type: 'url',
       required: true,
     },
-    account: { label: 'Account', value: 'zocks', required: true },
-    user: { label: 'User', value: 'imre-dobos-0y0ca2wqgr4ugypm', required: true },
-    eventType: { label: 'Event type (optional)', value: '', required: false },
     // Widget only. Blank leaves the widget's own default (560px) in place.
     minHeight: { label: 'Min height (optional)', value: '', required: false },
     // Branding overrides, forwarded to the booking page. Hide-only + recolor:
@@ -36,6 +36,7 @@
     hideProfilePhoto: {
       label: 'Hide profile photo',
       value: '',
+      required: false,
       type: 'checkbox',
     },
   };
@@ -46,21 +47,32 @@
   for (const [key, field] of Object.entries(FIELDS)) {
     config[key] = (params.get(key) || field.value).trim();
   }
-  config.base = config.base.replace(/\/+$/, '');
 
-  // The booking app routes on /{account}/{user}. For the plain iframe the
-  // branding overrides ride the frame URL directly (the widget builds its own
-  // URL from the options instead).
-  const overrides = new URLSearchParams();
-  if (config.brandColor) overrides.set('brandColor', config.brandColor);
-  for (const flag of ['hideLogo', 'hideAccountName', 'hideProfilePhoto']) {
-    if (config[flag] === '1') overrides.set(flag, '1');
+  // The widget script is served by the booking app itself, so its origin
+  // comes from the pasted link.
+  let bookingOrigin = '';
+  try {
+    bookingOrigin = new URL(config.url).origin;
+  } catch {
+    // Leave empty; the pages surface the bad link themselves.
   }
-  const overrideQuery = overrides.toString();
-  config.bookingUrl =
-    `${config.base}/${encodeURIComponent(config.account)}/${encodeURIComponent(config.user)}` +
-    (overrideQuery ? `?${overrideQuery}` : '');
-  config.widgetScriptUrl = `${config.base}/embed/v1.js`;
+  config.widgetScriptUrl = bookingOrigin ? `${bookingOrigin}/embed/v1.js` : '';
+
+  // For the plain iframe the branding overrides ride the frame URL directly
+  // (the widget builds its own URL from the options instead).
+  config.bookingUrl = config.url;
+  try {
+    const frameUrl = new URL(config.url);
+    if (config.brandColor) {
+      frameUrl.searchParams.set('brandColor', config.brandColor);
+    }
+    for (const flag of ['hideLogo', 'hideAccountName', 'hideProfilePhoto']) {
+      if (config[flag] === '1') frameUrl.searchParams.set(flag, '1');
+    }
+    config.bookingUrl = frameUrl.toString();
+  } catch {
+    // Keep the raw value; the browser will show its own error for a bad src.
+  }
 
   /* Renders the "demo settings" panel into `container`, showing only `names`
    * and pre-filled with the config in effect. Applying reloads the page with

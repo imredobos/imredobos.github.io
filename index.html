@@ -50,36 +50,37 @@
     <section class="card" style="margin-top:16px">
       <h2 style="margin:0 0 6px;font-size:16px">What both pages point at</h2>
       <p class="hint" style="margin:0 0 12px">
-        Defaults live in <code>assets/config.js</code>. Either page accepts
-        <code>?base=</code>, <code>?account=</code>, <code>?user=</code> and
-        <code>?eventType=</code>, so one deploy can demo any booking page.
-        Branding overrides are supported too &mdash; <code>?brandColor=%23b91c1c</code>,
-        <code>?hideLogo=1</code>, <code>?hideAccountName=1</code>,
-        <code>?hideProfilePhoto=1</code> &mdash; hide-only plus a recolor: they can
-        never show or replace what the account's settings keep private.
+        Everything is configured by the booking page link itself. The default
+        lives in <code>assets/config.js</code>; either page accepts
+        <code>?url=</code>, so one deploy can demo any booking page &mdash; an
+        advisor link, an event-type link, or (once the pages ship) a firm-wide
+        <code>/zocks</code> link, with <code>?l=</code> scheduling links carried
+        through. Branding overrides are supported too &mdash;
+        <code>?brandColor=%23b91c1c</code>, <code>?hideLogo=1</code>,
+        <code>?hideAccountName=1</code>, <code>?hideProfilePhoto=1</code> &mdash;
+        hide-only plus a recolor: they can never show or replace what the
+        account's settings keep private.
       </p>
       <table class="facts">
-        <tr><th>Booking site</th><td><code>https://booking.dev.zocks.io</code></td></tr>
-        <tr><th>Account</th><td><code>zocks</code></td></tr>
-        <tr><th>User</th><td><code>imre-dobos-0y0ca2wqgr4ugypm</code></td></tr>
+        <tr><th>Booking link</th><td><code>https://booking.dev.zocks.io/zocks/imre-dobos-0y0ca2wqgr4ugypm</code></td></tr>
       </table>
     </section>
 
     <section class="card" style="margin-top:16px">
-      <h2 style="margin:0 0 6px;font-size:16px">Before either page works here</h2>
+      <h2 style="margin:0 0 6px;font-size:16px">No allowlist, no setup</h2>
       <p class="hint" style="margin:0 0 10px">
-        This is a genuinely cross-origin host, so the account's embed allowlist
-        has to contain <code>imredobos.github.io</code>. As of the last check the
-        booking page still answers
-        <code>frame-ancestors 'self'</code>, so the browser blocks the frame:
-        <code>/widget</code> degrades to the widget's own "Open the booking
-        page" link after its 4s timeout, and <code>/iframe</code> shows nothing
-        but the browser's blocked-frame error.
+        Booking pages answer <code>frame-ancestors 'self' *</code>, so any
+        site &mdash; this one included &mdash; can embed them with zero
+        configuration. If the frame still never renders (a wrong link, or a
+        booking site not yet running the embedding release),
+        <code>/widget</code> degrades to its own "Open the booking page" link
+        after its 4s timeout, while <code>/iframe</code> shows only the
+        browser's blocked-frame error &mdash; which is the comparison the two
+        pages exist to make.
       </p>
       <p class="hint" style="margin:0">
         For a local app, point the demos at it with
-        <code>?base=http://localhost:3000</code> and add <code>localhost</code>
-        to <code>allowedDomains</code>.
+        <code>?url=http://localhost:3000/&lt;account&gt;/&lt;user&gt;</code>.
       </p>
     </section>
   </div>

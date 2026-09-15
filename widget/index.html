@@ -6,19 +6,15 @@
   <title>Widget embed &middot; Zocks booking</title>
   <link rel="stylesheet" href="../assets/site.css">
   <!--
-    Cross-origin harness for the embed widget. Unlike /embed/demo (same-origin,
-    allowed by `frame-ancestors 'self'`), this exercises the real path: the
-    account's embed allowlist must contain this page's domain or the browser
-    blocks the frame and the widget falls back to a link.
+    Cross-origin harness for the embed widget — the real path a partner site
+    takes. Booking pages are embeddable from any origin, so no configuration
+    is needed on the Zocks side. Against a local app:
 
-    Deployed, that domain is `imredobos.github.io`. Against a local app:
-
-      pnpm build:widget && pnpm dev          # serve the app on :3000
+      pnpm dev                               # serves the app on :3000
+                                             # (builds the widget for you)
       npx serve -l 4173 .                    # serve this repo on :4173
 
-    Then add "localhost" to the account's allowedDomains — the app maps
-    loopback hosts to `localhost:*` (app/security/embedConfig.ts), so any port
-    is covered — and open http://localhost:4173/widget/?base=http://localhost:3000
+    Then open http://localhost:4173/widget/?url=http://localhost:3000/zocks/…
   -->
 </head>
 <body>
@@ -34,9 +30,9 @@
 
     <p class="lede">
       The booking page mounted by <code>Zocks.initWidget()</code> &mdash; once
-      inline, once as a popup, from one script. The host page gets lifecycle
-      events back and the widget sizes its own frame, neither of which a plain
-      iframe can do.
+      inline, once as a popup, from one script and one pasted booking link. The
+      host page gets lifecycle events back and the widget sizes its own frame,
+      neither of which a plain iframe can do.
     </p>
 
     <div id="settings"></div>
@@ -46,25 +42,10 @@
       <span class="hint" id="config-label"></span>
     </div>
 
-    <div class="toggles">
-      <label>
-        <input type="checkbox" id="opt-scroll" checked>
-        <code>scrollOnStepChange</code> (re-mounts the widget)
-      </label>
-      <label>
-        <input type="checkbox" id="opt-fold" checked>
-        Push the embed below the fold
-      </label>
-    </div>
-
-    <!-- Deliberately below the fold, so scrollOnStepChange has something to do. -->
-    <div class="tall" id="fold">&darr; scroll down to the inline embed &darr;</div>
-
     <section class="card embed">
       <div class="embed-bar">
         <span class="tag">widget script</span>
         <code id="script-label"></code>
-        <span class="version" id="version-label"></span>
       </div>
       <div id="zocks-widget-host"></div>
       <p class="notice error" id="widget-status" hidden></p>
@@ -78,10 +59,7 @@
     const { config, mountSettings } = window.ZocksDemo;
 
     mountSettings(document.getElementById('settings'), [
-      'base',
-      'account',
-      'user',
-      'eventType',
+      'url',
       'minHeight',
       'brandColor',
       'hideLogo',
@@ -92,13 +70,9 @@
     const statusEl = document.getElementById('widget-status');
     const logEl = document.getElementById('log');
     const popupButton = document.getElementById('popup');
-    const scrollToggle = document.getElementById('opt-scroll');
-    const foldToggle = document.getElementById('opt-fold');
-    const fold = document.getElementById('fold');
 
     document.getElementById('script-label').textContent = config.widgetScriptUrl;
-    document.getElementById('config-label').textContent =
-      `${config.base} → /${config.account}/${config.user}`;
+    document.getElementById('config-label').textContent = config.url;
 
     let lines = [];
     function log(line) {
@@ -110,10 +84,6 @@
       statusEl.hidden = false;
       statusEl.innerHTML = html;
     }
-
-    foldToggle.addEventListener('change', () => {
-      fold.hidden = !foldToggle.checked;
-    });
 
     const script = document.createElement('script');
     script.src = config.widgetScriptUrl;
@@ -133,21 +103,20 @@
           `<code>${config.widgetScriptUrl}</code> did not define ` +
           `<code>window.Zocks</code> &mdash; the widget bundle is probably not ` +
           `deployed at that origin. Point the demo at a local app with ` +
-          `<code>?base=http://localhost:3000</code>.`
+          `<code>?url=http://localhost:3000/&lt;account&gt;/&lt;user&gt;</code>.`
         );
         return;
       }
 
-      log('widget loaded, version ' + window.Zocks.version);
-      document.getElementById('version-label').textContent = 'v' + window.Zocks.version;
+      log('widget loaded');
 
       const minHeight = Number(config.minHeight);
 
       function options(extra) {
         return Object.assign({
-          account: config.account,
-          user: config.user,
-          eventType: config.eventType || undefined,
+          // The pasted booking link is the whole configuration: account,
+          // advisor, event type, ?l= and the environment all ride in it.
+          url: config.url,
           minHeight: Number.isFinite(minHeight) && minHeight > 0 ? minHeight : undefined,
           // Branding overrides: the widget forwards these as query params on
           // the frame URL. An invalid brandColor makes initWidget throw, which
@@ -156,9 +125,6 @@
           hideLogo: config.hideLogo === '1',
           hideAccountName: config.hideAccountName === '1',
           hideProfilePhoto: config.hideProfilePhoto === '1',
-          // Not needed in practice — the widget derives this from its own src —
-          // but explicit here so a mismatched origin is obvious.
-          origin: config.base,
           onReady: function () {
             log('ready');
           },
@@ -172,30 +138,16 @@
             log('booking-confirmed ' + JSON.stringify(booking));
           },
           onError: function (error) {
-            // `unreachable` is how a blocked frame surfaces: the widget has
+            // `unreachable` is how a dead frame surfaces: the widget has
             // already swapped in its own "Open the booking page" fallback.
             log('error ' + error.code + ': ' + error.message);
           },
         }, extra);
       }
 
-      let inline = null;
-
-      function mountInline() {
-        if (inline) {
-          inline.destroy();
-          log('destroyed inline widget');
-        }
-        inline = window.Zocks.initWidget(options({
-          target: '#zocks-widget-host',
-          scrollOnStepChange: scrollToggle.checked,
-        }));
-        log('inline mounted, scrollOnStepChange=' + scrollToggle.checked);
-      }
-
       try {
-        mountInline();
-        scrollToggle.addEventListener('change', mountInline);
+        window.Zocks.initWidget(options({ target: '#zocks-widget-host' }));
+        log('inline mounted');
 
         const modal = window.Zocks.initWidget(options({ mode: 'popup' }));
         popupButton.disabled = false;
